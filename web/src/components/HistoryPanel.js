@@ -1,0 +1,5 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { difficultyLabel } from '../services/sudoku';
+import { formatDuration } from '../services/time';
+const HistoryPanel = ({ items }) => (_jsxs("div", { className: "history-panel", children: [_jsxs("div", { className: "history-header", children: [_jsx("h3", { children: "\u5386\u53F2\u6218\u7EE9" }), _jsxs("span", { children: [items.length, " \u5C40"] })] }), _jsxs("div", { className: "history-list", children: [items.length === 0 && _jsx("p", { children: "\u6682\u65E0\u8BB0\u5F55\uFF0C\u5FEB\u6765\u6311\u6218\u7B2C\u4E00\u5C40\uFF01" }), items.map((item) => (_jsxs("div", { className: "history-row", children: [_jsxs("div", { children: [_jsx("strong", { children: difficultyLabel[item.difficulty] }), _jsx("span", { children: new Date(item.completedAt).toLocaleString() })] }), _jsxs("div", { className: "history-stats", children: [_jsxs("span", { children: ["\u7528\u65F6 ", formatDuration(item.durationSeconds)] }), _jsxs("span", { children: ["\u9519\u8BEF ", item.mistakes] })] })] }, item.id)))] })] }));
+export default HistoryPanel;

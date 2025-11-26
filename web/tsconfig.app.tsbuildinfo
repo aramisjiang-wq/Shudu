@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/types.ts","./src/components/authpanel.tsx","./src/components/historypanel.tsx","./src/components/leaderboardpanel.tsx","./src/components/sudokuboard.tsx","./src/hooks/useauth.ts","./src/hooks/usetimer.ts","./src/services/api.ts","./src/services/sudoku.ts","./src/services/time.ts"],"version":"5.9.3"}
