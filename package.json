@@ -1,0 +1,17 @@
+{
+  "name": "sudoku-web-suite",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,web \"npm run dev -w server\" \"npm run dev -w web\"",
+    "install:all": "npm install -w server && npm install -w web"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
+
