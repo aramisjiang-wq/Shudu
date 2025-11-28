@@ -1,9 +1,36 @@
 import type { Difficulty, HistoryItem, LeaderboardEntry, PuzzlePayload, User } from '../types';
 
 // API 基础地址
-// 生产环境默认使用 Railway 后端
-const API_BASE = import.meta.env.VITE_API_URL || 
-  (import.meta.env.PROD ? 'https://shudu-production.up.railway.app' : '');
+// Vite 环境变量：https://vitejs.dev/guide/env-and-mode.html
+const getApiBase = () => {
+  // 优先使用环境变量
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // 判断是否为生产环境
+  // 在 Vercel 等生产环境中，location.hostname 不会是 localhost
+  const isProduction = 
+    typeof window !== 'undefined' && 
+    window.location.hostname !== 'localhost' && 
+    window.location.hostname !== '127.0.0.1';
+  
+  // 生产环境使用 Railway，开发环境使用空字符串（走 vite proxy）
+  return isProduction ? 'https://shudu-production.up.railway.app' : '';
+};
+
+const API_BASE = getApiBase();
+
+// 开发时输出调试信息
+if (import.meta.env.DEV) {
+  console.log('API Base URL:', API_BASE);
+  console.log('Environment:', {
+    MODE: import.meta.env.MODE,
+    PROD: import.meta.env.PROD,
+    DEV: import.meta.env.DEV,
+    VITE_API_URL: import.meta.env.VITE_API_URL,
+  });
+}
 
 const handleResponse = async (res: Response) => {
   const data = await res.json().catch(() => ({}));
