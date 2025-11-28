@@ -8,7 +8,10 @@
   ],
   "scripts": {
     "dev": "concurrently -n server,web \"npm run dev -w server\" \"npm run dev -w web\"",
-    "install:all": "npm install -w server && npm install -w web"
+    "install:all": "npm install -w server && npm install -w web",
+    "build": "npm run build -w web && npm run build -w server",
+    "vercel-build": "npm run build -w web",
+    "check-deploy": "node check-deployment.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

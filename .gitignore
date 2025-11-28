@@ -1,6 +1,32 @@
+# 依赖
 node_modules
-dist
-server/data
-.env
-*.log
+web/node_modules
+server/node_modules
 
+# 构建输出
+dist
+web/dist
+server/dist
+*.tsbuildinfo
+
+# 数据库
+server/data/*.db
+server/data/*.db-shm
+server/data/*.db-wal
+
+# 环境变量
+.env
+.env.local
+.env.production
+
+# 日志
+*.log
+npm-debug.log*
+
+# 编辑器
+.DS_Store
+.vscode
+.idea
+
+# Vercel
+.vercel

@@ -2,21 +2,34 @@
   "version": 2,
   "builds": [
     {
-      "src": "package.json",
+      "src": "web/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "./"
+        "distDir": "web/dist"
       }
+    },
+    {
+      "src": "api/index.ts",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "dest": "/api/index.ts"
+    },
+    {
+      "src": "/(.*\\..+)",
+      "dest": "/web/dist/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/web/dist/index.html"
     }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "JWT_SECRET": "@jwt_secret",
+    "CLIENT_ORIGIN": "@client_origin"
+  }
 }
