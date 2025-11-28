@@ -1,7 +1,9 @@
 import type { Difficulty, HistoryItem, LeaderboardEntry, PuzzlePayload, User } from '../types';
 
 // API 基础地址
-const API_BASE = import.meta.env.VITE_API_URL || '';
+// 生产环境默认使用 Railway 后端
+const API_BASE = import.meta.env.VITE_API_URL || 
+  (import.meta.env.PROD ? 'https://shudu-production.up.railway.app' : '');
 
 const handleResponse = async (res: Response) => {
   const data = await res.json().catch(() => ({}));
