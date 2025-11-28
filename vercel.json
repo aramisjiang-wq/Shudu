@@ -1,35 +1,12 @@
 {
-  "version": 2,
-  "builds": [
+  "buildCommand": "cd web && npm install && npm run build",
+  "outputDirectory": "web/dist",
+  "installCommand": "npm install",
+  "framework": null,
+  "rewrites": [
     {
-      "src": "web/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "web/dist"
-      }
-    },
-    {
-      "src": "api/index.ts",
-      "use": "@vercel/node"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/(.*\\..+)",
-      "dest": "/web/dist/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/web/dist/index.html"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production",
-    "JWT_SECRET": "@jwt_secret",
-    "CLIENT_ORIGIN": "@client_origin"
-  }
+  ]
 }
