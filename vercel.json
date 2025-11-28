@@ -1,5 +1,13 @@
 {
-  "buildCommand": "cd web && npm install && npm run build",
+  "version": 2,
+  "buildCommand": "npm run build --prefix web",
   "outputDirectory": "web/dist",
-  "installCommand": "npm install --prefix web"
+  "installCommand": "npm install --prefix web",
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
