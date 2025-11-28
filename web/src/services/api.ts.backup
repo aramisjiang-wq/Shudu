@@ -1,5 +1,8 @@
 import type { Difficulty, HistoryItem, LeaderboardEntry, PuzzlePayload, User } from '../types';
 
+// API 基础地址
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 const handleResponse = async (res: Response) => {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -10,7 +13,7 @@ const handleResponse = async (res: Response) => {
 };
 
 const request = (input: RequestInfo, init?: RequestInit) =>
-  fetch(input, {
+  fetch(`${API_BASE}${input}`, {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
@@ -79,4 +82,3 @@ export const GameAPI = {
     return data.item as HistoryItem;
   },
 };
-
