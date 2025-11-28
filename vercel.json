@@ -1,9 +1,4 @@
 {
-  "version": 2,
-  "buildCommand": "npm run build --prefix web",
-  "outputDirectory": "web/dist",
-  "installCommand": "npm install --prefix web",
-  "framework": null,
   "rewrites": [
     {
       "source": "/(.*)",
@@ -11,3 +6,4 @@
     }
   ]
 }
+
