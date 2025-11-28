@@ -12,9 +12,25 @@ initDb();
 
 const app = express();
 
+// CORS 配置 - 支持多个 origin
+const allowedOrigins = [
+  config.clientOrigin,
+  'https://shudu-eosin.vercel.app',
+  'http://localhost:5173',
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: config.clientOrigin,
+    origin: (origin, callback) => {
+      // 允许没有 origin 的请求（如 Postman、curl）
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   })
 );
