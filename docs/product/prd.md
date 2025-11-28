@@ -1,7 +1,8 @@
 # Sudoku Arena PRD
 
-> Last updated: 2025-11-26T13:40:00Z
+> Last updated: 2025-11-28T14:00:00Z
 > Source of truth for产品视角需求，所有设计/开发以本文为准。
+> **部署状态：** ✅ 已上线 - [在线体验](https://shudu-eosin.vercel.app)
 
 ## 1. 背景 & 目标
 - 让用户在浏览器中进行标准 9x9 数独对战，强调“学习-挑战-复盘”闭环，并赋予「数独的孤独世界（快来play我）」主题感。
@@ -80,10 +81,48 @@
 - 若未来接入 AI 代理，需要额外的操作日志与脚本化接口（未包含在 MVP）。
 
 ## 7. 里程碑
-1. **v1.0 (2025-11-26)**：注册/登录/游玩/战绩闭环 + 数独交互增强。
-2. **v1.1 (待定)**：排行榜、战绩详情。
-3. **v2.0 (待定)**：多人对战、AI 助手提示。
+1. **v1.0 (2025-11-26)** ✅：注册/登录/游玩/战绩闭环 + 数独交互增强。
+2. **v1.0.1 (2025-11-28)** ✅：排行榜功能上线 + 全栈部署完成。
+   - 前端：Vercel (https://shudu-eosin.vercel.app)
+   - 后端：Railway (https://shudu-production.up.railway.app)
+   - 数据库：SQLite on Railway
+3. **v1.1 (待定)**：战绩详情、数据库迁移到 PostgreSQL。
+4. **v2.0 (待定)**：多人对战、AI 助手提示。
+
+## 8. 部署架构
+
+### 8.1 生产环境
+- **前端托管**：Vercel
+  - 自动 HTTPS
+  - 全球 CDN
+  - GitHub 自动部署
+- **后端托管**：Railway
+  - Node.js 运行时
+  - SQLite 持久化
+  - 自动扩容
+- **CI/CD**：推送到 main 分支自动触发部署
+
+### 8.2 访问地址
+- **用户入口**：https://shudu-eosin.vercel.app
+- **API 端点**：https://shudu-production.up.railway.app
+- **健康检查**：https://shudu-production.up.railway.app/health
+
+### 8.3 环境变量
+**前端（Vercel）：**
+```
+VITE_API_URL=https://shudu-production.up.railway.app
+```
+
+**后端（Railway）：**
+```
+NODE_ENV=production
+JWT_SECRET=<随机生成>
+CLIENT_ORIGIN=https://shudu-eosin.vercel.app
+PORT=8080
+```
 
 ---
 任何偏离本文的需求变更需先更新本 PRD，并在 README / Architecture 同步时间戳。
+
+**部署文档：** 详见 [docs/deployment/](../deployment/) 目录
 

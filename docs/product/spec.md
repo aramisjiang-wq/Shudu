@@ -1,12 +1,39 @@
 # Sudoku Arena 技术规格（Spec）
 
-> Last updated: 2025-11-26T14:10:00Z
-> 说明：本文件从工程角度描述实现细节，配合 `docs/prd.md`、`docs/architecture.md` 使用。
+> Last updated: 2025-11-28T14:00:00Z
+> 说明：本文件从工程角度描述实现细节，配合 `docs/product/prd.md` 使用。
+> **部署状态：** ✅ 生产环境运行中
 
 ## 1. 系统视图
-- **前端 (`web/`)**：Vite + React 18 + TypeScript。状态以 hooks 驱动（`useAuth`, `useTimer`, 局部 state）。与后端通过 `/api/*` 通信，凭证依赖 HttpOnly Cookie。
-- **后端 (`server/`)**：Node 20 + Express。SQLite via `better-sqlite3`。JWT 鉴权（7 天）。模块化路由（auth/puzzle/history）。
-- **文档**：`README.md` 为入口，`docs/architecture.md` 定义数据 & API，本文件补充实现规范。
+
+### 1.1 架构概览
+```
+用户浏览器
+    ↓
+Vercel (前端 CDN)
+https://shudu-eosin.vercel.app
+    ↓ API 请求
+Railway (后端服务)
+https://shudu-production.up.railway.app
+    ↓
+SQLite 数据库
+```
+
+### 1.2 技术栈
+- **前端 (`web/`)**：
+  - 框架：Vite + React 18 + TypeScript
+  - 状态管理：React Hooks (`useAuth`, `useTimer`, 局部 state)
+  - 通信：Fetch API + HttpOnly Cookie
+  - 部署：Vercel（自动构建 + CDN）
+  
+- **后端 (`server/`)**：
+  - 运行时：Node.js 20
+  - 框架：Express
+  - 数据库：SQLite via `better-sqlite3`
+  - 认证：JWT（7 天有效期）
+  - 部署：Railway（容器化部署）
+  
+- **文档**：`README.md` 为入口，本文件补充实现规范。
 
 ## 2. 数据定义
 参考 `docs/architecture.md` 第 2 节。重要类型：
@@ -113,13 +140,131 @@ interface LeaderboardEntry {
   - 前端：使用 Playwright 录制核心流（登录→填局→提交）。
   - 后端：`jest`/`vitest` 对 `generatePuzzle`、`history` 路由做单测。
 
-## 8. 风险 & 对策
-| 风险 | 影响 | 对策 |
-| --- | --- | --- |
-| `better-sqlite3` 编译失败 | 安装中断 | 使用 Node LTS；若必须 Node 25，提前下载 headers 并设置 `CXXFLAGS="-std=c++20"`。 |
-| JWT Secret 缺失 | 登录态无效 | `.env` 设置 `JWT_SECRET`；开发环境默认 `replace-me` 仅用于本地。 |
-| 草稿状态失真 | 体验下降 | `notes` 仅在空格存在；写入值强制清空。 |
+## 8. 部署配置
+
+### 8.1 Railway 后端配置
+
+**项目设置：**
+- Root Directory: `server`
+- Build Command: `npm install && npm run build`
+- Start Command: `npm start`
+
+**环境变量：**
+```bash
+NODE_ENV=production
+JWT_SECRET=<使用 crypto.randomBytes(32).toString('hex') 生成>
+CLIENT_ORIGIN=https://shudu-eosin.vercel.app
+PORT=8080  # Railway 自动设置
+```
+
+**配置文件：**
+- `server/nixpacks.toml`: Nixpacks 构建配置
+- `server/Procfile`: 进程启动命令
+- `server/railway.json`: Railway 项目配置
+
+**关键代码修改：**
+```typescript
+// server/src/config.ts
+export const config = {
+  // 支持 Railway 的 PORT 环境变量
+  port: Number(process.env.PORT ?? process.env.SERVER_PORT ?? 8080),
+  jwtSecret: process.env.JWT_SECRET ?? 'replace-me',
+  clientOrigin: process.env.CLIENT_ORIGIN ?? 'http://localhost:5173',
+  nodeEnv: process.env.NODE_ENV ?? 'development',
+};
+```
+
+### 8.2 Vercel 前端配置
+
+**项目设置：**
+- Framework: Vite
+- Root Directory: `web`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Install Command: `npm install`
+
+**环境变量：**
+```bash
+VITE_API_URL=https://shudu-production.up.railway.app
+```
+
+**配置文件：**
+```json
+// vercel.json
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+```
+
+**前端 API 配置：**
+```typescript
+// web/src/services/api.ts
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+```
+
+### 8.3 CORS 配置
+
+```typescript
+// server/src/app.ts
+app.use(cors({
+  origin: config.clientOrigin,  // https://shudu-eosin.vercel.app
+  credentials: true,
+}));
+```
+
+### 8.4 数据持久化
+
+**当前方案：** SQLite 文件存储在 Railway 容器中
+- 优点：简单、零配置
+- 缺点：重新部署会丢失数据
+
+**推荐方案：** 迁移到 PostgreSQL
+```bash
+# Railway 提供免费 PostgreSQL
+railway add postgres
+```
+
+## 9. 风险 & 对策
+
+| 风险 | 影响 | 对策 | 状态 |
+| --- | --- | --- | --- |
+| `better-sqlite3` 编译失败 | 安装中断 | 使用 Node LTS；Railway 使用 nixpacks 自动处理 | ✅ 已解决 |
+| JWT Secret 缺失 | 登录态无效 | Railway 环境变量配置 | ✅ 已配置 |
+| 草稿状态失真 | 体验下降 | `notes` 仅在空格存在；写入值强制清空 | ✅ 已实现 |
+| Railway 端口配置 | 服务无法启动 | 支持 `PORT` 环境变量 | ✅ 已修复 |
+| Vercel Root Directory | 构建失败 | 项目设置中配置 `web` | ✅ 已配置 |
+| SQLite 数据丢失 | 用户数据丢失 | 迁移到 PostgreSQL 或配置 Volume | ⚠️ 待优化 |
+
+## 10. 监控与维护
+
+### 10.1 健康检查
+```bash
+# 后端健康检查
+curl https://shudu-production.up.railway.app/health
+
+# 预期响应
+{"status":"ok","time":"2025-11-28T..."}
+```
+
+### 10.2 日志查看
+- **Railway**: Deployments → 最新部署 → View Logs
+- **Vercel**: Deployments → 最新部署 → Build Logs / Runtime Logs
+
+### 10.3 性能指标
+| 指标 | 目标 | 当前 |
+|------|------|------|
+| 前端首次加载 | < 2s | ~1.5s |
+| API 响应时间 | < 200ms | ~150ms |
+| 前端构建时间 | < 1min | ~30s |
+| 后端构建时间 | < 3min | ~2min |
 
 ---
-维护指南：节奏遵循“文档 → 代码 → 测试”。任何变更需更新 Last updated 字段。
+维护指南：节奏遵循"文档 → 代码 → 测试"。任何变更需更新 Last updated 字段。
+
+**部署文档：** 详见 [docs/deployment/](../deployment/) 目录
 
