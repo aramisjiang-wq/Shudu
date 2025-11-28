@@ -1,38 +1,39 @@
 import type { Difficulty, HistoryItem, LeaderboardEntry, PuzzlePayload, User } from '../types';
 
-// API 基础地址
-// Vite 环境变量：https://vitejs.dev/guide/env-and-mode.html
-const getApiBase = () => {
-  // 优先使用环境变量
+// API 基础地址配置
+// 策略：运行时动态判断，确保在生产环境使用正确的 API 地址
+let API_BASE = '';
+
+// 运行时初始化（必须在浏览器环境执行）
+if (typeof window !== 'undefined') {
+  // 1. 优先使用环境变量
   if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
-  
-  // 判断是否为生产环境
-  // 在 Vercel 等生产环境中，location.hostname 不会是 localhost
-  if (typeof window !== 'undefined') {
+    API_BASE = import.meta.env.VITE_API_URL;
+  } 
+  // 2. 根据 hostname 判断
+  else {
     const hostname = window.location.hostname;
-    const isProduction = hostname !== 'localhost' && hostname !== '127.0.0.1';
-    
-    // 生产环境使用 Railway，开发环境使用空字符串（走 vite proxy）
-    return isProduction ? 'https://shudu-production.up.railway.app' : '';
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      // 开发环境：空字符串，使用 vite proxy
+      API_BASE = '';
+    } else {
+      // 生产环境：使用 Railway 后端
+      API_BASE = 'https://shudu-production.up.railway.app';
+    }
   }
   
-  // SSR 或构建时，使用环境变量或默认值
-  return import.meta.env.MODE === 'production' 
-    ? 'https://shudu-production.up.railway.app' 
-    : '';
-};
-
-const API_BASE = getApiBase();
-
-// 输出调试信息（生产环境也输出，方便排查）
-console.log('[API Config]', {
-  API_BASE,
-  hostname: typeof window !== 'undefined' ? window.location.hostname : 'N/A',
-  MODE: import.meta.env.MODE,
-  VITE_API_URL: import.meta.env.VITE_API_URL || 'not set',
-});
+  // 调试输出
+  console.log('[API Config]', {
+    API_BASE,
+    hostname: window.location.hostname,
+    VITE_API_URL: import.meta.env.VITE_API_URL || 'not set',
+    MODE: import.meta.env.MODE,
+  });
+} else {
+  // 构建时回退（SSR 场景）
+  API_BASE = import.meta.env.VITE_API_URL || 
+    (import.meta.env.PROD ? 'https://shudu-production.up.railway.app' : '');
+}
 
 const handleResponse = async (res: Response) => {
   const data = await res.json().catch(() => ({}));
