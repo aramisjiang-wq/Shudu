@@ -1,4 +1,6 @@
 import { FormEvent, useState } from 'react';
+import InteractiveSudokuPreview from './InteractiveSudokuPreview';
+import FloatingNumbers from './FloatingNumbers';
 
 interface Props {
   onLogin: (payload: { email: string; password: string }) => Promise<void>;
@@ -24,7 +26,48 @@ const AuthPanel = ({ onLogin, onRegister, busy, error, clearError }: Props) => {
 
   return (
     <div className="auth-container">
-      <div className="auth-card">
+      <FloatingNumbers />
+      <div className="auth-layout">
+        {/* 左侧：游戏预览和特色展示 */}
+        <div className="auth-preview-section">
+          <div className="preview-content">
+            <h2 className="preview-title">🎯 数独的孤独世界</h2>
+            <p className="preview-description">
+              挑战思维极限，征服数字迷宫<br />
+              体验最纯粹的逻辑乐趣
+            </p>
+            
+            <InteractiveSudokuPreview />
+            
+            <div className="game-features">
+              <div className="feature-item">
+                <span className="feature-icon">🎮</span>
+                <div>
+                  <strong>三种难度</strong>
+                  <p>新手 · 进阶 · 专家</p>
+                </div>
+              </div>
+              <div className="feature-item">
+                <span className="feature-icon">🏆</span>
+                <div>
+                  <strong>排行榜</strong>
+                  <p>与全球玩家竞技</p>
+                </div>
+              </div>
+              <div className="feature-item">
+                <span className="feature-icon">📊</span>
+                <div>
+                  <strong>历史记录</strong>
+                  <p>追踪你的成长轨迹</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 右侧：登录表单 */}
+        <div className="auth-form-section">
+          <div className="auth-card">
         <div className="auth-header">
           <div className="auth-logo">
             <div className="sudoku-grid">
@@ -141,6 +184,8 @@ const AuthPanel = ({ onLogin, onRegister, busy, error, clearError }: Props) => {
               {mode === 'login' ? '立即注册' : '立即登录'}
             </button>
           </p>
+        </div>
+          </div>
         </div>
       </div>
     </div>

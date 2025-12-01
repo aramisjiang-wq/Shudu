@@ -3,23 +3,28 @@ import type { Difficulty, HistoryItem, LeaderboardEntry, PuzzlePayload, User } f
 // API 基础地址配置
 // 运行时动态获取，确保在浏览器环境正确判断
 const getApiBase = (): string => {
-  // 1. 优先使用环境变量
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+  // 1. 优先使用环境变量（Vercel 构建时注入）
+  const envApiUrl = import.meta.env.VITE_API_URL;
+  if (envApiUrl && envApiUrl.trim() !== '') {
+    return envApiUrl.trim();
   }
   
-  // 2. 运行时判断（浏览器环境）
-  if (typeof window !== 'undefined') {
+  // 2. 运行时判断（必须在浏览器环境）
+  if (typeof window !== 'undefined' && window.location) {
     const hostname = window.location.hostname;
     // 开发环境：localhost，使用空字符串（走 vite proxy）
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return '';
     }
-    // 生产环境：使用 Railway 后端
-    return 'https://shudu-production.up.railway.app';
+    // 生产环境（Vercel 域名）：使用 Railway 后端
+    // 检查是否是 Vercel 域名或其他生产域名
+    if (hostname.includes('vercel.app') || hostname.includes('netlify.app') || hostname.includes('github.io')) {
+      return 'https://shudu-production.up.railway.app';
+    }
   }
   
   // 3. 构建时回退：生产构建默认使用 Railway
+  // 这会在 SSR 或构建时使用
   return 'https://shudu-production.up.railway.app';
 };
 
@@ -34,16 +39,19 @@ const handleResponse = async (res: Response) => {
 
 const request = (input: RequestInfo, init?: RequestInit) => {
   const apiBase = getApiBase();
-  const url = `${apiBase}${input}`;
+  // 我们的代码中 input 总是字符串，直接拼接
+  const url = typeof input === 'string' ? `${apiBase}${input}` : input;
   
-  // 调试输出（仅第一次）
-  if (!(window as any).__API_DEBUG__) {
-    (window as any).__API_DEBUG__ = true;
+  // 调试输出（每次请求都输出，方便排查）
+  if (typeof window !== 'undefined') {
+    const urlString = typeof url === 'string' ? url : url instanceof Request ? url.url : url.toString();
     console.log('🔧 API Request:', {
       apiBase,
-      url,
-      hostname: typeof window !== 'undefined' ? window.location.hostname : 'N/A',
+      url: urlString,
+      hostname: window.location.hostname,
       VITE_API_URL: import.meta.env.VITE_API_URL || 'not set',
+      MODE: import.meta.env.MODE,
+      PROD: import.meta.env.PROD,
     });
   }
   
