@@ -69,10 +69,29 @@ const handleResponse = async (res: Response) => {
 
 const request = (input: RequestInfo, init?: RequestInit) => {
   // 每次请求时重新计算，确保获取最新的 hostname（不能缓存）
-  const apiBase = getApiBase();
+  let apiBase = getApiBase();
   
-  // 我们的代码中 input 总是字符串，直接拼接
-  const url = typeof input === 'string' ? `${apiBase}${input}` : input;
+  // 强制修复：如果 apiBase 为空且是生产环境，强制使用 Railway
+  if (typeof window !== 'undefined' && window.location) {
+    const hostname = window.location.hostname.toLowerCase();
+    
+    // 如果不是 localhost 且 apiBase 为空，强制使用 Railway
+    if (
+      !apiBase && 
+      hostname !== 'localhost' && 
+      hostname !== '127.0.0.1' && 
+      hostname !== '0.0.0.0'
+    ) {
+      console.warn('⚠️ API Base is empty in production! Forcing Railway backend.');
+      apiBase = 'https://shudu-production.up.railway.app';
+    }
+  }
+  
+  // 构建 URL：如果 apiBase 为空，input 必须是绝对路径或相对路径
+  // 但为了安全，我们确保在生产环境总是使用绝对路径
+  const url = typeof input === 'string' 
+    ? (apiBase ? `${apiBase}${input}` : input)
+    : input;
   
   // 调试输出（每次请求都输出，方便排查）
   if (typeof window !== 'undefined') {
@@ -86,12 +105,10 @@ const request = (input: RequestInfo, init?: RequestInit) => {
       PROD: import.meta.env.PROD,
     });
     
-    // 如果 apiBase 为空但 hostname 是 Vercel，说明检测失败，强制使用 Railway
-    if (!apiBase && window.location.hostname.includes('vercel.app')) {
-      console.error('❌ API Base is empty but hostname is Vercel! Forcing Railway backend.');
-      const correctedUrl = typeof input === 'string' 
-        ? `https://shudu-production.up.railway.app${input}` 
-        : url;
+    // 最终安全检查：如果 URL 是相对路径且 hostname 是 Vercel，强制使用 Railway
+    if (typeof url === 'string' && url.startsWith('/') && window.location.hostname.includes('vercel.app')) {
+      console.error('❌ URL is relative path on Vercel! Forcing Railway backend.');
+      const correctedUrl = `https://shudu-production.up.railway.app${input}`;
       return fetch(correctedUrl, {
         credentials: 'include',
         headers: {
