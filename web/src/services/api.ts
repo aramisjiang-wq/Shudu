@@ -5,20 +5,27 @@ import type { Difficulty, HistoryItem, LeaderboardEntry, PuzzlePayload, User } f
 const getApiBase = (): string => {
   // 1. 优先使用环境变量（Vercel 构建时注入）
   const envApiUrl = import.meta.env.VITE_API_URL;
-  if (envApiUrl && envApiUrl.trim() !== '') {
+  if (envApiUrl && typeof envApiUrl === 'string' && envApiUrl.trim() !== '') {
     return envApiUrl.trim();
   }
   
   // 2. 运行时判断（必须在浏览器环境）
-  if (typeof window !== 'undefined' && window.location) {
-    const hostname = window.location.hostname;
+  if (typeof window !== 'undefined' && window.location && window.location.hostname) {
+    const hostname = window.location.hostname.toLowerCase();
+    
     // 开发环境：localhost，使用空字符串（走 vite proxy）
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0') {
       return '';
     }
+    
     // 生产环境（Vercel 域名）：使用 Railway 后端
     // 检查是否是 Vercel 域名或其他生产域名
-    if (hostname.includes('vercel.app') || hostname.includes('netlify.app') || hostname.includes('github.io')) {
+    if (
+      hostname.includes('vercel.app') || 
+      hostname.includes('netlify.app') || 
+      hostname.includes('github.io') ||
+      hostname.includes('vercel.com')
+    ) {
       return 'https://shudu-production.up.railway.app';
     }
   }
@@ -27,6 +34,9 @@ const getApiBase = (): string => {
   // 这会在 SSR 或构建时使用
   return 'https://shudu-production.up.railway.app';
 };
+
+// 立即计算并缓存 API_BASE（确保在模块加载时执行）
+const API_BASE = getApiBase();
 
 const handleResponse = async (res: Response) => {
   const data = await res.json().catch(() => ({}));
@@ -38,7 +48,11 @@ const handleResponse = async (res: Response) => {
 };
 
 const request = (input: RequestInfo, init?: RequestInit) => {
-  const apiBase = getApiBase();
+  // 每次请求时重新计算，确保获取最新的 hostname
+  const apiBase = typeof window !== 'undefined' && window.location 
+    ? getApiBase() 
+    : API_BASE;
+  
   // 我们的代码中 input 总是字符串，直接拼接
   const url = typeof input === 'string' ? `${apiBase}${input}` : input;
   
@@ -52,6 +66,7 @@ const request = (input: RequestInfo, init?: RequestInit) => {
       VITE_API_URL: import.meta.env.VITE_API_URL || 'not set',
       MODE: import.meta.env.MODE,
       PROD: import.meta.env.PROD,
+      computed: getApiBase(), // 显示实时计算结果
     });
   }
   
