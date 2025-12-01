@@ -44,6 +44,20 @@ const getApiBase = (): string => {
   return 'https://shudu-production.up.railway.app';
 };
 
+// 在 window 对象上暴露配置信息，方便在控制台调试
+if (typeof window !== 'undefined') {
+  (window as any).__SUDOKU_CONFIG__ = {
+    getApiBase: () => getApiBase(),
+    getEnv: () => ({
+      VITE_API_URL: import.meta.env.VITE_API_URL || 'not set',
+      MODE: import.meta.env.MODE,
+      PROD: import.meta.env.PROD,
+      hostname: window.location.hostname,
+    }),
+  };
+  console.log('🔍 调试信息已暴露，在控制台输入: __SUDOKU_CONFIG__.getApiBase() 查看 API 地址');
+}
+
 const handleResponse = async (res: Response) => {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
